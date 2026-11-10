@@ -1,0 +1,61 @@
+/* Spec Sheet kit v1.0: portrait 1080 x 1350 slides, monochrome.
+   Every size below is in output pixels (1 SVG unit = 1 px of the 1080-wide page).
+   Upstream sizes were set for a 1700-wide desktop sheet; these are scaled up so the
+   smallest label stays readable when LinkedIn shows the page about 390 pt wide on a phone.
+   Fonts (Arimo, JetBrains Mono, both SIL OFL 1.1) are injected by tools/render.mjs. */
+
+:root{
+  --paper:#ffffff; --ink:#111111; --ink2:#444444; --ink3:#7a7a7a;
+  --fill:#f3f3f3; --fill2:#e6e6e6;
+  --f:'Arimo','Helvetica Neue',Helvetica,Arial,sans-serif;
+  --m:'JetBrains Mono',ui-monospace,monospace;
+  color-scheme:light;
+}
+@page{size:1080px 1350px;margin:0}
+html,body{margin:0;padding:0;background:var(--paper)}
+section.slide{width:1080px;height:1350px;overflow:hidden;break-after:page;page-break-after:always;position:relative;background:var(--paper)}
+section.slide:last-child{break-after:auto;page-break-after:auto}
+section.slide>svg{display:block;width:1080px;height:1350px}
+
+/* lines (upstream weight x about 2.2) */
+.border{fill:none;stroke:var(--ink);stroke-width:2.6}
+.obj{fill:var(--paper);stroke:var(--ink);stroke-width:3.5;stroke-linejoin:round}
+.stage{fill:var(--paper);stroke:var(--ink);stroke-width:3.5;stroke-linejoin:round}
+.well{fill:var(--fill);stroke:var(--ink);stroke-width:2.2}
+.slot{fill:none;stroke:var(--ink2);stroke-width:1.8;stroke-dasharray:9 7}
+.slot-fixed{fill:var(--fill2);stroke:var(--ink);stroke-width:2.2}
+.tbdbox{fill:none;stroke:var(--ink);stroke-width:1.8;stroke-dasharray:18 6 3 6}
+.slot-ref{fill:var(--fill);stroke:var(--ink2);stroke-width:1.8;stroke-dasharray:2 5}
+.thin{fill:none;stroke:var(--ink);stroke-width:1.8}
+.ph{fill:none;stroke:var(--ink3);stroke-width:1.8;stroke-dasharray:30 7 7 7}
+.cl{fill:none;stroke:var(--ink3);stroke-width:1.5;stroke-dasharray:34 7 4 7}
+.dl{stroke:var(--ink);stroke-width:1.6;fill:none}
+.ext{stroke:var(--ink);stroke-width:1.2;fill:none}
+.flowl{stroke:var(--ink);stroke-width:2.4;fill:none}
+.env{fill:none;stroke:var(--ink);stroke-width:1.8;stroke-dasharray:22 7 4 7}
+.arrow{fill:var(--ink)}
+.hl{stroke:var(--ink2);stroke-width:1.5}
+.lead{stroke:var(--ink);stroke-width:1.6;fill:none}
+.dot{fill:var(--ink)}
+.nb{fill:var(--paper);stroke:var(--ink);stroke-width:2}
+.gatebox{stroke:var(--ink);stroke-width:3}   /* no fill rule: hatch is set by attribute (upstream pitfall) */
+
+/* text: floor is 24 px; tools/check.mjs fails anything smaller */
+.u{font-family:var(--f);text-transform:uppercase;letter-spacing:.07em}
+.dt{font:400 26px var(--m);fill:var(--ink);paint-order:stroke;stroke:var(--paper);stroke-width:8px;stroke-linejoin:round}
+.dts{font:400 24px var(--f);fill:var(--ink2);letter-spacing:.06em;text-transform:uppercase;paint-order:stroke;stroke:var(--paper);stroke-width:6px}
+.sl{font:400 24px var(--f);fill:var(--ink2);letter-spacing:.08em;text-transform:uppercase}
+.slb{font:700 26px var(--f);fill:var(--ink);letter-spacing:.06em;text-transform:uppercase}
+.nt{font:400 30px var(--f);fill:var(--ink);letter-spacing:.04em;text-transform:uppercase}
+.nth{font:700 32px var(--f);fill:var(--ink);letter-spacing:.06em}
+.vt{font:400 34px var(--f);fill:var(--ink);letter-spacing:.12em;text-transform:uppercase}
+.vtb{font:400 64px var(--f);fill:var(--ink);letter-spacing:.08em;text-transform:uppercase}
+.hero{font:400 84px var(--f);fill:var(--ink);letter-spacing:.06em;text-transform:uppercase}
+.nbt{font:400 24px var(--m);fill:var(--ink)}
+.th{font:700 24px var(--f);fill:var(--ink);letter-spacing:.06em;text-transform:uppercase}
+.tc{font:400 26px var(--m);fill:var(--ink)}
+.foot{font:400 24px var(--f);fill:var(--ink2);letter-spacing:.08em;text-transform:uppercase}
+.footb{font:700 24px var(--f);fill:var(--ink);letter-spacing:.08em;text-transform:uppercase}
+
+/* brand marks live only on the cover and close slides, inside .brand */
+.brand image{opacity:1}
