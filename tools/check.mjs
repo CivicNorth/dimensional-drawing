@@ -200,6 +200,7 @@ try{try{
     const cited=new Set(scan.flatMap(s=>[...s.all.matchAll(/SRC (\d+)/g)].map(m=>+m[1])));
     [...cited].filter(x=>!ids.has(x)).forEach(x=>{c5++;fail('sources',`a sheet cites SRC ${x}, which is not in sources`)});
     for(const c of claims)for(const sh of c.sheets||[]){const sl=scan[sh-1];if(sl&&!new RegExp('SRC[^\\n]{0,12}\\b'+c.src+'\\b').test(sl.all)){c5++;fail('claims',`sheet ${sh} is listed for a claim from source ${c.src} but does not show SRC ${c.src}`)}}
+    scan.forEach((sl,k)=>{if(k===scan.length-1)return;for(const m of sl.all.matchAll(/SRC (\d+)/g)){const n=+m[1];if(ids.has(n)&&!claims.some(c=>+c.src===n&&(c.sheets||[]).includes(k+1))){c5++;fail('claims',`sheet ${k+1} shows SRC ${n}, but no claim from source ${n} lists sheet ${k+1}; add the claim to the ledger or remove the mark`)}}});
     ok('claims-sources',c5);
     if(!claims.length)warn('claims','no claims listed; fine only if the episode states no facts about tools, limits or numbers');
   }
@@ -226,6 +227,10 @@ try{try{
         if(!['approved','drawn','review','posted'].includes(me.status)){c9++;fail('series',`${ep.dwg} is "${me.status}" in the series file; only approved episodes may be drawn`)}
         if(!me.approval||!String(me.approval.words||'').trim()){c9++;fail('series',`${ep.dwg} has no approval record with the owner's own words`)}
         else if(String(me.approval.episode||'')!==String(me.no)){c9++;fail('series',`${ep.dwg} approval record must name its episode (approval.episode = "${me.no}")`)}
+        else if(me.approval.confirmed!==true){c9++;fail('series',`${ep.dwg} approval is not confirmed by the owner (approval.confirmed must be true); ask her and copy her words`)}
+        if(['review','posted'].includes(me.status)){let vr='';try{vr=fs.readFileSync(path.join(dir,'verify-report.md'),'utf8')}catch{}
+          if(!/^VERDICT: PASS\s*$/m.test(vr.split('\n')[0]||'')){c9++;fail('series',`${ep.dwg} is "${me.status}" but verify-report.md does not start with VERDICT: PASS`)}
+          else if(!vr.includes('inputs: '+R.inputs)){c9++;fail('series',`${ep.dwg} is "${me.status}" but verify-report.md was written for other files (its inputs line does not match ${R.inputs.slice(0,12)}); verify again`)}}
         if(norm(String(me.title)).toLowerCase()!==norm(String(ep.title||'')).toLowerCase()){c9++;fail('series',`episode.json title "${ep.title}" differs from the series file "${me.title}"`)}
         nextEp=all[i+1]||null;const cn=(ep.close||{}).next;
         if(nextEp&&!['approved','drawn','review','posted'].includes(nextEp.status))warn('series',`this episode publicly teases Spec Sheet ${nextEp.no}, which is still "${nextEp.status}"; get it approved before this one posts`);
@@ -280,5 +285,6 @@ try{try{
   for(const w of R.warn)console.log('WARN '+w.id.padEnd(15)+w.msg);
   if(R.overrides.length)console.log('NOTE episode overrides: '+R.overrides.join('; '));
   console.log(`${R.fail.length} fail, ${R.warn.length} warn, ${R.pass.length} pass${rulesFile?'  (rules: '+path.relative(process.cwd(),rulesFile)+')':'  (default rules)'}`);
+  console.log('inputs: '+R.inputs);
   process.exitCode=R.fail.length?1:0;
 }finally{await browser.close()}
