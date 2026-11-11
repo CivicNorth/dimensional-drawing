@@ -58,12 +58,12 @@ The kit wraps what it draws so the checker can reason about it:
 | font, contrast, element | Text not in Arimo or JetBrains Mono, text lighter than #888 or drawn below 60% opacity (opacity, fill-opacity and color alpha combined), or a `foreignObject`, `use` or `textPath` element |
 | em-dash, emoji, banned | An em dash, emoji, or banned phrase on a sheet (curly quotes normalized; `re:` entries are regular expressions; `[data-avoid]` excepted). En dashes only warn |
 | codes | A code drawn outside a table that no table row defines (`K1..K5` in a code cell defines K1 to K5). Codes are matched in capitals only |
-| claims-sources | A claim pointing to a missing source or a sheet that does not exist, a claim or `checked` date that is not a real date, a source without a full https URL or unused by any claim, a sheet citing a missing SRC, or a last sheet whose "no outside facts" line disagrees with the sources |
+| claims-sources | A claim pointing to a missing source or a sheet that does not exist, a claim or `checked` date that is not a real date, a source without a full https URL or unused by any claim, a sheet citing a missing SRC, a sheet a claim lists that does not carry that claim's SRC mark, or a last sheet whose "no outside facts" line disagrees with the sources |
 | caption | Over the length limit, a link or any bare domain, an em dash, a spaced en dash or double hyphen, an emoji, hashtags over the limit, a banned phrase, or not ending with the question when the rules require it |
 | evidence | (`requireClaimQuote`) a claim without a quote of 3 to 45 words copied from its source page. The checker cannot fetch pages; the auditor confirms each quote is really on the page |
 | primary | (`primaryDomains`) a source outside the primary-source list without a `primaryNote` the auditor must confirm |
-| series | (`series`, a JSON file beside the rules) the episode is missing from the series file, not approved, has no approval record in the owner's words, has a different title, or its close sheet teases a number, day or title that does not match the next episode |
-| caption recipe | (`caption`) the first line, call to action, question placement, or hashtags differ from the recipe: first line from a template, the question alone before the call to action, a call to action naming the next episode from the series file, and 3 to 5 approved hashtags including the required ones, only in the last paragraph |
+| series | (`series`, a JSON file beside the rules) the episode is missing from the series file, not approved, has no approval record in the owner's words or one that names a different episode (`approval.episode`), has a different title, or its close sheet teases a number, day or title that does not match the next episode in the same season. WARN when that next episode is not yet approved |
+| caption recipe | (`caption`) the first line, call to action, question placement, or hashtags differ from the recipe: first line from a template, the question alone before the call to action, a call to action naming the next episode from the series file, and 3 to 5 approved hashtags including the required ones, only in the last paragraph. On a season's last episode the call to action is `ctaEnd`, where `{nextSeason}` is filled in |
 | pdf-title | `pdfTitle` empty, over 100 characters, with a dash or emoji, or with a banned phrase |
 
 It cannot judge whether the lesson is true or good, or whether a line crosses a shape it should not. That is the reviewer's job.
@@ -72,7 +72,7 @@ Known limits: the PDF's text layer repeats each haloed label (a side effect of t
 
 ## Changing the kit
 
-Change it here, re-render every published episode to see the effect, then tag a new version (`v1.1.0`) and bump the pin in the consuming repo on purpose.
+Change it here, re-render every published episode to see the effect, then tag a new version (`v1.2.0`) and bump the pin in the consuming repo on purpose.
 
 ## Requirements
 

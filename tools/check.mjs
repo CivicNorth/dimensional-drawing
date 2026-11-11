@@ -199,6 +199,7 @@ try{try{
     if(!sources.length&&!saysNone){c5++;fail('sources','no sources in episode.json, but the last sheet does not say so')}
     const cited=new Set(scan.flatMap(s=>[...s.all.matchAll(/SRC (\d+)/g)].map(m=>+m[1])));
     [...cited].filter(x=>!ids.has(x)).forEach(x=>{c5++;fail('sources',`a sheet cites SRC ${x}, which is not in sources`)});
+    for(const c of claims)for(const sh of c.sheets||[]){const sl=scan[sh-1];if(sl&&!new RegExp('SRC[^\\n]{0,12}\\b'+c.src+'\\b').test(sl.all)){c5++;fail('claims',`sheet ${sh} is listed for a claim from source ${c.src} but does not show SRC ${c.src}`)}}
     ok('claims-sources',c5);
     if(!claims.length)warn('claims','no claims listed; fine only if the episode states no facts about tools, limits or numbers');
   }
@@ -219,13 +220,15 @@ try{try{
   let S=null,me=null,nextEp=null;
   if(rules.series){const sf=path.resolve(path.dirname(rulesFile),rules.series);let c9=0;
     try{S=JSON.parse(fs.readFileSync(sf,'utf8'))}catch(e){c9++;fail('series',`cannot read ${rules.series}: ${String(e.message).split('\n')[0]}`)}
-    if(S&&ep){const all=(S.seasons||[]).flatMap(se=>se.episodes||[]);const i=all.findIndex(e=>e.dwg===ep.dwg);me=all[i];
+    if(S&&ep){const season=(S.seasons||[]).find(se=>(se.episodes||[]).some(e=>e.dwg===ep.dwg));const all=season?season.episodes:[];const i=all.findIndex(e=>e.dwg===ep.dwg);me=all[i];if(season)me.__season=season.n;
       if(!me){c9++;fail('series',`${ep.dwg} is not in the series file`)}
       else{
         if(!['approved','drawn','review','posted'].includes(me.status)){c9++;fail('series',`${ep.dwg} is "${me.status}" in the series file; only approved episodes may be drawn`)}
-        if(!me.approval||!String(me.approval.words||'').trim()){c9++;fail('series',`${ep.dwg} has no approval record with Samantha's own words`)}
+        if(!me.approval||!String(me.approval.words||'').trim()){c9++;fail('series',`${ep.dwg} has no approval record with the owner's own words`)}
+        else if(String(me.approval.episode||'')!==String(me.no)){c9++;fail('series',`${ep.dwg} approval record must name its episode (approval.episode = "${me.no}")`)}
         if(norm(String(me.title)).toLowerCase()!==norm(String(ep.title||'')).toLowerCase()){c9++;fail('series',`episode.json title "${ep.title}" differs from the series file "${me.title}"`)}
         nextEp=all[i+1]||null;const cn=(ep.close||{}).next;
+        if(nextEp&&!['approved','drawn','review','posted'].includes(nextEp.status))warn('series',`this episode publicly teases Spec Sheet ${nextEp.no}, which is still "${nextEp.status}"; get it approved before this one posts`);
         const flat=t=>norm(String(t)).toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim();
         if(nextEp){
           if(!cn){c9++;fail('series',`close.next is empty but the series continues with Spec Sheet ${nextEp.no}`)}
@@ -258,7 +261,7 @@ try{try{
       if(R2.hashtagsAllowed)for(const t of tagList)if(!R2.hashtagsAllowed.concat(R2.hashtagsRequired||[]).some(a=>a.toLowerCase()===t.toLowerCase())){c6++;fail('caption',`${t} is not on the approved hashtag list`)}
       if(new Set(tagList.map(t=>t.toLowerCase())).size!==tagList.length){c6++;fail('caption','a hashtag is repeated')}}
     if(R2.cta&&S){const ctaP=paras[paras.length-(R2.hashtagsLast?2:1)]||'';
-      const want=nextEp?R2.cta.replace('{no}',nextEp.no).replace('{day}',nextEp.day).replace('{title}',nextEp.title):(R2.ctaEnd||'');
+      const want=nextEp?R2.cta.replace('{no}',nextEp.no).replace('{day}',nextEp.day).replace('{title}',nextEp.title):(R2.ctaEnd||'').replace('{nextSeason}',String((me&&me.__season||0)+1));
       if(norm(ctaP).toLowerCase()!==norm(want).toLowerCase()){c6++;fail('caption',`call to action must read "${want}"`)}
       if(R2.questionBeforeCta){const qP=paras[paras.length-(R2.hashtagsLast?3:2)]||'';if(!/\?$/.test(qP)||qP.split(/\n/).length>1){c6++;fail('caption','the paragraph before the call to action must be the one question, on its own')}}}
     if(rules.captionEndsWithQuestion&&!rules.caption&&!/\?$/.test(paras[paras.length-1]||'')){c6++;fail('caption','must end with the question')}
