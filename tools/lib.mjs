@@ -32,7 +32,10 @@ export function clearOutputs(dir,{keepCheck=false}={}){const out=path.join(dir,'
 /* Hash of everything that decides the drawing, so check.json shows exactly what it checked. */
 export function inputHash(dir,extra=[]){const h=crypto.createHash('sha256');
   for(const f of ['slides.html','episode.json','caption.md'].map(x=>path.join(dir,x)).concat([path.join(KIT,'spec-kit.js'),path.join(KIT,'spec-kit.css')],extra))
-    if(f&&fs.existsSync(f)){h.update(path.basename(f));h.update(fs.readFileSync(f))}
+    if(f&&fs.existsSync(f)){h.update(path.basename(f));let b=fs.readFileSync(f);
+      // status and postedAt change after the audit by design, so they are not inputs
+      if(path.basename(f)==='episode.json'){try{const j=JSON.parse(b);delete j.status;delete j.postedAt;b=Buffer.from(JSON.stringify(j))}catch{}}
+      h.update(b)}
   return h.digest('hex')}
 
 export function readEpisode(dir){
