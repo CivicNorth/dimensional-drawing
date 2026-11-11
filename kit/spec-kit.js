@@ -1,4 +1,4 @@
-/* Spec Sheet kit v1.2
+/* Spec Sheet kit v1.3
    Port of the drawing kit in enesozturk/dimensional-drawing
    (skills/dimensional-drawing/examples/card-sheet.html, MIT, Copyright (c) 2026 Enes Ozturk),
    rescaled for 1080 x 1350 portrait slides, plus process parts for drawing a business job

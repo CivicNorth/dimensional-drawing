@@ -177,7 +177,13 @@ try{try{
   const expand=c=>{const m=c.match(/^([A-Z]+)(\d+)\.\.(?:[A-Z]+)?(\d+)$/);if(!m)return [c];const out=[];for(let i=+m[2];i<=+m[3];i++)out.push(m[1]+i);return out};
   const defined=new Set(scan.flatMap(s=>s.codes.flatMap(expand)));
   const undef=[...used].filter(c=>!defined.has(c));
-  if(undef.length)fail('codes',`drawn but missing from every table: ${undef.join(', ')}`);else ok('codes');
+  // a reader meets the definition before the code: each code's table row must be on or before the first sheet that draws it
+  const firstDef=new Map();scan.forEach(s=>s.codes.flatMap(expand).forEach(c=>{if(!firstDef.has(c))firstDef.set(c,s.n)}));
+  const firstUse=new Map();all.filter(t=>!t.inTable).forEach(t=>(t.s.match(re)||[]).forEach(c=>{if(!firstUse.has(c)||firstUse.get(c)>t.n)firstUse.set(c,t.n)}));
+  const late=[...firstUse].filter(([c,n])=>firstDef.has(c)&&firstDef.get(c)>n).map(([c,n])=>`${c} (drawn on sheet ${n}, defined on sheet ${firstDef.get(c)})`);
+  if(undef.length)fail('codes',`drawn but missing from every table: ${undef.join(', ')}`);
+  else if(late.length)fail('codes',`used before the key defines it: ${late.join(', ')}; put the key before the first drawing`);
+  else ok('codes');
   [...defined].filter(c=>!used.has(c)).forEach(c=>warn('codes',`${c} is in a table but never drawn`));
   if(!all.some(t=>t.s.includes('[TBD]')))warn('tbd','no [TBD] anywhere; the series promises a "what only you decide" sheet');
 

@@ -57,7 +57,7 @@ The kit wraps what it draws so the checker can reason about it:
 | brand | A brand group on any sheet but the first and last |
 | font, contrast, element | Text not in Arimo or JetBrains Mono, text lighter than #888 or drawn below 60% opacity (opacity, fill-opacity and color alpha combined), or a `foreignObject`, `use` or `textPath` element |
 | em-dash, emoji, banned | An em dash, emoji, or banned phrase on a sheet (curly quotes normalized; `re:` entries are regular expressions; `[data-avoid]` excepted). En dashes only warn |
-| codes | A code drawn outside a table that no table row defines (`K1..K5` in a code cell defines K1 to K5). Codes are matched in capitals only |
+| codes | A code drawn outside a table that no table row defines (`K1..K5` in a code cell defines K1 to K5). Codes are matched in capitals only. Also fails a code drawn on a sheet before the first sheet whose table defines it, so the key comes before the drawings (v1.3) |
 | claims-sources | A claim pointing to a missing source or a sheet that does not exist, a claim or `checked` date that is not a real date, a source without a full https URL or unused by any claim, a sheet citing a missing SRC, a sheet a claim lists that does not carry that claim's SRC mark, an SRC mark on a sheet that no claim lists, or a last sheet whose "no outside facts" line disagrees with the sources |
 | caption | Over the length limit, a link or any bare domain, an em dash, a spaced en dash or double hyphen, an emoji, hashtags over the limit, a banned phrase, or not ending with the question when the rules require it |
 | evidence | (`requireClaimQuote`) a claim without a quote of 3 to 45 words copied from its source page. The checker cannot fetch pages; the auditor confirms each quote is really on the page |
