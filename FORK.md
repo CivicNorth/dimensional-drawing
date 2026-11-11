@@ -28,6 +28,8 @@ Thresholds live in the nearest `spec-sheet.rules.json` in a folder above the epi
 
 Render writes `out/render.json` with `inputs`, a SHA-256 of the slides, episode, caption, kit and rules files it drew. Check deletes any old `check.json` first, computes the same hash, and fails if `render.json` is missing or its hash differs, so a passing `check.json` always describes the PDF on disk. A failed render, or a check that cannot load the drawing, also deletes the old PDF and PNGs. An ordinary check failure keeps the outputs for inspection and records the failure in `check.json`. If the checker itself crashes while scanning, the crash is recorded as a FAIL.
 
+Optional rules (v1.1): `requireClaimQuote`, `primaryDomains`, `series`, and `caption` turn on the evidence, primary-source, series and caption-recipe checks below. Without them the checks are skipped.
+
 ## Grouping contract
 
 The kit wraps what it draws so the checker can reason about it:
@@ -58,6 +60,10 @@ The kit wraps what it draws so the checker can reason about it:
 | codes | A code drawn outside a table that no table row defines (`K1..K5` in a code cell defines K1 to K5). Codes are matched in capitals only |
 | claims-sources | A claim pointing to a missing source or a sheet that does not exist, a claim or `checked` date that is not a real date, a source without a full https URL or unused by any claim, a sheet citing a missing SRC, or a last sheet whose "no outside facts" line disagrees with the sources |
 | caption | Over the length limit, a link or any bare domain, an em dash, a spaced en dash or double hyphen, an emoji, hashtags over the limit, a banned phrase, or not ending with the question when the rules require it |
+| evidence | (`requireClaimQuote`) a claim without a quote of 3 to 45 words copied from its source page. The checker cannot fetch pages; the auditor confirms each quote is really on the page |
+| primary | (`primaryDomains`) a source outside the primary-source list without a `primaryNote` the auditor must confirm |
+| series | (`series`, a JSON file beside the rules) the episode is missing from the series file, not approved, has no approval record in the owner's words, has a different title, or its close sheet teases a number, day or title that does not match the next episode |
+| caption recipe | (`caption`) the first line, call to action, question placement, or hashtags differ from the recipe: first line from a template, the question alone before the call to action, a call to action naming the next episode from the series file, and 3 to 5 approved hashtags including the required ones, only in the last paragraph |
 | pdf-title | `pdfTitle` empty, over 100 characters, with a dash or emoji, or with a banned phrase |
 
 It cannot judge whether the lesson is true or good, or whether a line crosses a shape it should not. That is the reviewer's job.

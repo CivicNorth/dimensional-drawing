@@ -203,6 +203,38 @@ try{try{
     if(!claims.length)warn('claims','no claims listed; fine only if the episode states no facts about tools, limits or numbers');
   }
 
+  // 8b. evidence: every claim carries the exact words it rests on; sources must be primary
+  if(ep&&rules.requireClaimQuote){let q=0;
+    for(const c of ep.claims||[]){const w=String(c.quote||'').trim().split(/\s+/).filter(Boolean).length;
+      if(w<3||w>45){q++;fail('evidence',`claim "${(c.text||'').slice(0,40)}" needs a quote of 3 to 45 words copied from the source page`)}}
+    ok('evidence',q)}
+  if(ep&&Array.isArray(rules.primaryDomains)){let q=0;
+    for(const s of ep.sources||[]){let h='';try{h=new URL(s.url).hostname}catch{}
+      if(!rules.primaryDomains.some(d=>h===d||h.endsWith('.'+d))){
+        if(s.primaryNote)warn('primary',`source ${s.n} (${h}) is outside the primary list; the auditor must confirm: ${s.primaryNote}`);
+        else{q++;fail('primary',`source ${s.n} (${h}) is not on the primary-source list; use the original publisher, or add primaryNote explaining why this is the original`)}}}
+    ok('primary',q)}
+
+  // 8c. series: approval and continuity come from the series file, not from memory
+  let S=null,me=null,nextEp=null;
+  if(rules.series){const sf=path.resolve(path.dirname(rulesFile),rules.series);let c9=0;
+    try{S=JSON.parse(fs.readFileSync(sf,'utf8'))}catch(e){c9++;fail('series',`cannot read ${rules.series}: ${String(e.message).split('\n')[0]}`)}
+    if(S&&ep){const all=(S.seasons||[]).flatMap(se=>se.episodes||[]);const i=all.findIndex(e=>e.dwg===ep.dwg);me=all[i];
+      if(!me){c9++;fail('series',`${ep.dwg} is not in the series file`)}
+      else{
+        if(!['approved','drawn','review','posted'].includes(me.status)){c9++;fail('series',`${ep.dwg} is "${me.status}" in the series file; only approved episodes may be drawn`)}
+        if(!me.approval||!String(me.approval.words||'').trim()){c9++;fail('series',`${ep.dwg} has no approval record with Samantha's own words`)}
+        if(norm(String(me.title)).toLowerCase()!==norm(String(ep.title||'')).toLowerCase()){c9++;fail('series',`episode.json title "${ep.title}" differs from the series file "${me.title}"`)}
+        nextEp=all[i+1]||null;const cn=(ep.close||{}).next;
+        const flat=t=>norm(String(t)).toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim();
+        if(nextEp){
+          if(!cn){c9++;fail('series',`close.next is empty but the series continues with Spec Sheet ${nextEp.no}`)}
+          else{if(flat(cn.no)!==flat('Spec Sheet '+nextEp.no)){c9++;fail('series',`close sheet teases ${cn.no}; the next episode is Spec Sheet ${nextEp.no}`)}
+            if(flat(cn.day)!==flat(nextEp.day)){c9++;fail('series',`close sheet says ${cn.day}; the next episode posts on ${nextEp.day}`)}
+            if(flat((cn.title||[]).join(' '))!==flat(nextEp.title)){c9++;fail('series',`close sheet teases "${(cn.title||[]).join(' ')}"; the next title is "${nextEp.title}"`)}}}
+        else if(cn){c9++;fail('series','close.next is set but this is the last episode in the series file')}}}
+    ok('series',c9)}
+
   // 9. caption
   const cap=path.join(dir,'caption.md');let c6=0;
   if(!fs.existsSync(cap)){c6++;fail('caption','caption.md missing')}
@@ -212,10 +244,24 @@ try{try{
     if(c.includes('\u2014')){c6++;fail('caption','em dash')}
     if(/\s\u2013\s|--/.test(c)){c6++;fail('caption','an en dash or double hyphen used as a dash')}
     if(emoji.test(c)){c6++;fail('caption','emoji')}
-    const tags=(c.match(/(^|[^\w&])[#\uff03][A-Za-z]/g)||[]).length;if(tags>rules.maxHashtags){c6++;fail('caption',`${tags} hashtags; the limit is ${rules.maxHashtags}`)}
+    const tags=(c.match(/(^|[^\w&])[#\uff03][A-Za-z]/g)||[]).length;if(tags>((rules.caption||{}).hashtagsMax??rules.maxHashtags)){c6++;fail('caption',`${tags} hashtags; the limit is ${(rules.caption||{}).hashtagsMax??rules.maxHashtags}`)}
     for(const {b,re} of bannedRe)if(re.test(c)){c6++;fail('caption',`banned phrase "${b}"`)}
     const paras=c.split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean);
-    if(rules.captionEndsWithQuestion&&!/\?$/.test(paras[paras.length-1]||'')){c6++;fail('caption','must end with the question')}
+    const R2=rules.caption||{};const lines=c.split('\n').map(l=>l.trim());
+    if(R2.firstLine&&me){const want=R2.firstLine.replace('{no}',me.no).replace('{title}',me.title);
+      if(norm(lines[0]).toLowerCase()!==norm(want).toLowerCase()){c6++;fail('caption',`first line must be "${want}"`)}}
+    const tagLine=paras[paras.length-1]||'';const tagList=(tagLine.match(/(^|[^\w&])[#\uff03][A-Za-z][\w]*/g)||[]).map(t=>t.trim().replace(/^[^#\uff03]+/,''));
+    if(R2.hashtagsLast){const elsewhere=paras.slice(0,-1).some(p=>/(^|[^\w&])[#\uff03][A-Za-z]/.test(p));
+      if(elsewhere){c6++;fail('caption','hashtags belong only in the last paragraph')}
+      if(R2.hashtagsMin&&tagList.length<R2.hashtagsMin){c6++;fail('caption',`${tagList.length} hashtags; at least ${R2.hashtagsMin}`)}
+      for(const t of R2.hashtagsRequired||[])if(!tagList.some(x=>x.toLowerCase()===t.toLowerCase())){c6++;fail('caption',`missing the series hashtag ${t}`)}
+      if(R2.hashtagsAllowed)for(const t of tagList)if(!R2.hashtagsAllowed.concat(R2.hashtagsRequired||[]).some(a=>a.toLowerCase()===t.toLowerCase())){c6++;fail('caption',`${t} is not on the approved hashtag list`)}
+      if(new Set(tagList.map(t=>t.toLowerCase())).size!==tagList.length){c6++;fail('caption','a hashtag is repeated')}}
+    if(R2.cta&&S){const ctaP=paras[paras.length-(R2.hashtagsLast?2:1)]||'';
+      const want=nextEp?R2.cta.replace('{no}',nextEp.no).replace('{day}',nextEp.day).replace('{title}',nextEp.title):(R2.ctaEnd||'');
+      if(norm(ctaP).toLowerCase()!==norm(want).toLowerCase()){c6++;fail('caption',`call to action must read "${want}"`)}
+      if(R2.questionBeforeCta){const qP=paras[paras.length-(R2.hashtagsLast?3:2)]||'';if(!/\?$/.test(qP)||qP.split(/\n/).length>1){c6++;fail('caption','the paragraph before the call to action must be the one question, on its own')}}}
+    if(rules.captionEndsWithQuestion&&!rules.caption&&!/\?$/.test(paras[paras.length-1]||'')){c6++;fail('caption','must end with the question')}
     const hook=c.split(/\n/).slice(0,2).join(' ');if(hook.length>210)warn('caption',`first two lines are ${hook.length} characters; the hook may fall below "see more"`);
     ok('caption',c6)}
   if(ep){const t=norm(ep.pdfTitle||'');let c8=0;
