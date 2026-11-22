@@ -273,7 +273,9 @@ try{try{
       if(new Set(tagList.map(t=>t.toLowerCase())).size!==tagList.length){c6++;fail('caption','a hashtag is repeated')}}
     if(R2.cta&&S){const ctaP=paras[paras.length-(R2.hashtagsLast?2:1)]||'';
       const want=nextEp?R2.cta.replace('{no}',nextEp.no).replace('{day}',nextEp.day).replace('{title}',nextEp.title):(R2.ctaEnd||'').replace('{nextSeason}',String((me&&me.__season||0)+1));
-      if(norm(ctaP).toLowerCase()!==norm(want).toLowerCase()){c6++;fail('caption',`call to action must read "${want}"`)}
+      // a title ending in ? ! or . takes no extra period from the template ("Private?." reads as a typo)
+      const wantFixed=want.replace(/([?!.])\.$/,'$1');
+      if(norm(ctaP).toLowerCase()!==norm(wantFixed).toLowerCase()){c6++;fail('caption',`call to action must read "${wantFixed}"`)}
       if(R2.questionBeforeCta){const qP=paras[paras.length-(R2.hashtagsLast?3:2)]||'';if(!/\?$/.test(qP)||qP.split(/\n/).length>1){c6++;fail('caption','the paragraph before the call to action must be the one question, on its own')}}}
     if(rules.captionEndsWithQuestion&&!rules.caption&&!/\?$/.test(paras[paras.length-1]||'')){c6++;fail('caption','must end with the question')}
     const hook=c.split(/\n/).slice(0,2).join(' ');if(hook.length>210)warn('caption',`first two lines are ${hook.length} characters; the hook may fall below "see more"`);
